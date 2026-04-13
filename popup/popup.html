@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Productivity Tracker</h1>
+    
+    <div class="progress-section">
+      <h3>Today's Usage</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <span id="progressText">0 minutes</span>
+    </div>
+    
+    <div class="stats-section">
+      <h3>Daily Stats</h3>
+      <div id="dailyStats">Loading...</div>
+    </div>
+    
+    <div class="stats-section">
+      <h3>Per Site Usage</h3>
+      <div id="siteStats">Loading...</div>
+    </div>
+    
+    <div class="controls">
+      <button id="resetBtn">Reset Today</button>
+      <button id="settingsBtn">Settings</button>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
+

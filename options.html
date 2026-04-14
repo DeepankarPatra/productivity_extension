@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Productivity Tracker Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📊 Productivity Tracker Settings</h1>
+      <p>Customize which websites to track and set your daily limits</p>
+    </header>
+
+    <div class="settings-section">
+      <h2>Daily Limit</h2>
+      <div class="setting-item">
+        <label for="dailyLimit">Daily limit (minutes):</label>
+        <input type="number" id="dailyLimit" min="1" max="1440" value="120">
+        <span class="help-text">Set your daily time limit for tracked websites</span>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Tracked Websites</h2>
+      <div class="setting-item">
+        <label for="newSite">Add new website:</label>
+        <div class="add-site-container">
+          <input type="text" id="newSite" placeholder="e.g., facebook.com">
+          <button id="addSite" class="btn-primary">Add Site</button>
+        </div>
+        <span class="help-text">Enter domain name without http:// or www.</span>
+      </div>
+      
+      <div class="websites-list">
+        <h3>Currently Tracked Sites:</h3>
+        <div id="sitesList" class="sites-container">
+          <!-- Sites will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Notifications</h2>
+      <div class="setting-item">
+        <label class="checkbox-label">
+          <input type="checkbox" id="notificationsEnabled" checked>
+          <span class="checkmark"></span>
+          Enable notifications when approaching daily limit
+        </label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="saveSettings" class="btn-primary btn-large">Save Settings</button>
+      <button id="resetToDefaults" class="btn-secondary">Reset to Defaults</button>
+    </div>
+
+    <div id="saveMessage" class="save-message hidden">Settings saved successfully!</div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
+

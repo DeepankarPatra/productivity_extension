@@ -4,11 +4,12 @@ A Chrome extension to help you track and limit time spent on distracting website
 
 ## Features
 
--   📊 **Total Usage Stats**: See how much time you've spent on distracting sites today.
+-   📊 **Total Usage Stats**: See how much time you've spent on distracting sites today (updated in real-time).
 -   🌐 **Per-Site Tracking**: View a breakdown of time spent on each specific distracting website.
 -   ⏱️ **Daily Limits**: Set a daily limit for distracting sites.
 -   🔔 **Smart Notifications**: Get notified when you reach 75% and 100% of your daily limit.
 -   🎨 **Customizable**: Add your own distracting sites and set custom limits.
+-   💡 **Smart Recommendations**: Get suggestions for sites to track based on your browsing frequency.
 
 ## Installation
 
@@ -38,6 +39,7 @@ The extension automatically tracks time when you are actively viewing a site tha
     -   Change your daily limit (in minutes).
     -   Add new sites to track.
     -   Remove sites from the list.
+    -   View and add recommended sites based on your browsing frequency.
     -   Enable or disable notifications.
 
 ## Development

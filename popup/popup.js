@@ -1,5 +1,5 @@
 // Load data when popup opens
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   loadTodayStats();
   setupEventListeners();
 });
@@ -13,11 +13,11 @@ async function loadTodayStats() {
   try {
     const localData = await chrome.storage.local.get(['todayUsage', 'siteUsage']);
     const syncData = await chrome.storage.sync.get(['dailyLimit']);
-    
+
     const todayUsage = localData.todayUsage || 0;
     const dailyLimit = syncData.dailyLimit || 120; // 2 hours default
     const siteUsage = localData.siteUsage || {};
-    
+
     updateProgressBar(todayUsage, dailyLimit);
     updateStatsDisplay(todayUsage);
     updateSiteStatsDisplay(siteUsage);
@@ -28,15 +28,15 @@ async function loadTodayStats() {
 
 function updateSiteStatsDisplay(siteUsage) {
   const siteStatsDiv = document.getElementById('siteStats');
-  
+
   if (Object.keys(siteUsage).length === 0) {
     siteStatsDiv.innerHTML = '<div>No data for today yet.</div>';
     return;
   }
-  
+
   // Sort by time spent
   const sortedSites = Object.entries(siteUsage).sort((a, b) => b[1] - a[1]);
-  
+
   let html = '<ul class="site-list">';
   for (const [site, minutes] of sortedSites) {
     if (minutes < 0.1) continue; // Skip very small times
@@ -49,7 +49,7 @@ function updateSiteStatsDisplay(siteUsage) {
     </li>`;
   }
   html += '</ul>';
-  
+
   siteStatsDiv.innerHTML = html;
 }
 
@@ -57,10 +57,10 @@ function updateProgressBar(usage, limit) {
   const percentage = Math.min((usage / limit) * 100, 100);
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
-  
+
   progressFill.style.width = percentage + '%';
   progressText.textContent = `${Math.round(usage)} / ${limit} minutes`;
-  
+
   // Change color based on usage
   progressFill.className = 'progress-fill';
   if (percentage > 80) {
@@ -74,7 +74,7 @@ function updateStatsDisplay(usage) {
   const hours = Math.floor(usage / 60);
   const minutes = Math.round(usage % 60);
   const timeText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-  
+
   document.getElementById('dailyStats').innerHTML = `
     <div>Time on distracting sites: ${timeText}</div>
     <div>Status: ${getStatusText(usage)}</div>

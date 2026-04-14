@@ -52,6 +52,11 @@ async function startNewSession(tabId) {
         startTime: Date.now()
       }
     });
+    
+    const domain = getDomain(tab.url);
+    if (domain) {
+      await incrementVisitCount(domain);
+    }
   } catch (error) {
     console.error('Error starting session:', error);
   }
@@ -193,4 +198,23 @@ chrome.runtime.onStartup.addListener(async () => {
     });
   }
 });
+
+function getDomain(url) {
+  if (!url) return null;
+  try {
+    const parsedUrl = new URL(url);
+    if (!parsedUrl.protocol.startsWith('http')) return null;
+    return parsedUrl.hostname.replace(/^www\./, '');
+  } catch (e) {
+    return null;
+  }
+}
+
+async function incrementVisitCount(domain) {
+  if (!domain) return;
+  const result = await chrome.storage.local.get(['siteVisits']);
+  const siteVisits = result.siteVisits || {};
+  siteVisits[domain] = (siteVisits[domain] || 0) + 1;
+  await chrome.storage.local.set({ siteVisits });
+}
 

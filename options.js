@@ -14,6 +14,9 @@ function loadSettings() {
 
     // Load notifications setting
     document.getElementById('notificationsEnabled').checked = data.notificationsEnabled !== false;
+    
+    // Load recommendations
+    loadRecommendations();
   });
 }
 
@@ -113,4 +116,69 @@ document.getElementById('resetToDefaults').addEventListener('click', resetToDefa
 
 // Load settings on page load
 loadSettings();
+
+async function loadRecommendations() {
+  try {
+    const result = await chrome.storage.local.get(['siteVisits']);
+    const siteVisits = result.siteVisits || {};
+    
+    const syncData = await chrome.storage.sync.get(['trackedSites']);
+    const trackedSites = syncData.trackedSites || [];
+    
+    const recommendedList = document.getElementById('recommendedSitesList');
+    if (!recommendedList) return;
+    
+    recommendedList.innerHTML = '';
+    
+    // Sort by count descending
+    const sortedSites = Object.entries(siteVisits)
+      .sort((a, b) => b[1] - a[1]);
+      
+    let count = 0;
+    for (const [site, visits] of sortedSites) {
+      if (!trackedSites.includes(site)) {
+        addRecommendationToList(site, visits);
+        count++;
+        if (count >= 5) break; // Limit to 5
+      }
+    }
+    
+    if (count === 0) {
+      recommendedList.innerHTML = '<div>No recommendations yet. Browse more sites!</div>';
+    }
+  } catch (error) {
+    console.error('Error loading recommendations:', error);
+  }
+}
+
+function addRecommendationToList(site, count) {
+  const recommendedList = document.getElementById('recommendedSitesList');
+  const item = document.createElement('div');
+  item.classList.add('site-item');
+
+  const name = document.createElement('div');
+  name.classList.add('site-name');
+  name.textContent = `${site} (${count} visits)`;
+
+  const addButton = document.createElement('button');
+  addButton.textContent = 'Add';
+  addButton.classList.add('btn-primary');
+  addButton.addEventListener('click', () => {
+    addSiteFromRecommendation(site);
+  });
+
+  item.appendChild(name);
+  item.appendChild(addButton);
+  recommendedList.appendChild(item);
+}
+
+async function addSiteFromRecommendation(site) {
+  const data = await chrome.storage.sync.get(['trackedSites']);
+  const trackedSites = data.trackedSites || [];
+  if (!trackedSites.includes(site)) {
+    const updatedSites = [...trackedSites, site];
+    await chrome.storage.sync.set({ trackedSites: updatedSites });
+    loadSettings(); // Reloads everything
+  }
+}
 

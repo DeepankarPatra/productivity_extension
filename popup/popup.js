@@ -11,12 +11,14 @@ function setupEventListeners() {
 
 async function loadTodayStats() {
   try {
-    const localData = await chrome.storage.local.get(['todayUsage', 'siteUsage']);
-    const syncData = await chrome.storage.sync.get(['dailyLimit']);
+    const response = await chrome.runtime.sendMessage({ action: 'getCurrentStats' });
+    
+    if (!response) {
+      console.error('No response from background script');
+      return;
+    }
 
-    const todayUsage = localData.todayUsage || 0;
-    const dailyLimit = syncData.dailyLimit || 120; // 2 hours default
-    const siteUsage = localData.siteUsage || {};
+    const { todayUsage, siteUsage, dailyLimit } = response;
 
     updateProgressBar(todayUsage, dailyLimit);
     updateStatsDisplay(todayUsage);

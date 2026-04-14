@@ -12,10 +12,6 @@ const DISTRACTING_SITES = [
   'discord.com'
 ];
 
-let activeTabId = null;
-let startTime = null;
-let currentUrl = null;
-
 // Track active tab changes
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   await saveCurrentSession();
@@ -24,9 +20,13 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
 
 // Track URL changes within the same tab
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.url && tabId === activeTabId) {
-    await saveCurrentSession();
-    await startNewSession(tabId);
+  if (changeInfo.url) {
+    const result = await chrome.storage.local.get(['activeSession']);
+    const activeSession = result.activeSession;
+    if (activeSession && tabId === activeSession.tabId) {
+      await saveCurrentSession();
+      await startNewSession(tabId);
+    }
   }
 });
 
@@ -45,26 +45,62 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
 async function startNewSession(tabId) {
   try {
     const tab = await chrome.tabs.get(tabId);
-    activeTabId = tabId;
-    currentUrl = tab.url;
-    startTime = Date.now();
+    await chrome.storage.local.set({
+      activeSession: {
+        tabId: tabId,
+        url: tab.url,
+        startTime: Date.now()
+      }
+    });
   } catch (error) {
     console.error('Error starting session:', error);
   }
 }
 
 async function saveCurrentSession() {
-  if (!startTime || !currentUrl) return;
+  const result = await chrome.storage.local.get(['activeSession']);
+  const activeSession = result.activeSession;
   
-  const sessionTime = (Date.now() - startTime) / 1000 / 60; // Convert to minutes
+  if (!activeSession || !activeSession.startTime || !activeSession.url) return;
   
-  const matchedSite = await getMatchingDistractingSite(currentUrl);
-  if (sessionTime > 0.1 && matchedSite) {
+  const sessionTime = (Date.now() - activeSession.startTime) / 1000 / 60; // Convert to minutes
+  
+  const matchedSite = await getMatchingDistractingSite(activeSession.url);
+  // Reduce threshold to 0.01 (approx 0.6 seconds)
+  if (sessionTime > 0.01 && matchedSite) {
     await addToTodayUsage(sessionTime, matchedSite);
   }
   
-  startTime = null;
-  currentUrl = null;
+  await chrome.storage.local.remove('activeSession');
+}
+
+// Handle messages from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'getCurrentStats') {
+    getCurrentStats().then(stats => sendResponse(stats));
+    return true; // Keep channel open for async
+  }
+});
+
+async function getCurrentStats() {
+  const result = await chrome.storage.local.get(['todayUsage', 'siteUsage', 'activeSession']);
+  let todayUsage = result.todayUsage || 0;
+  let siteUsage = { ...result.siteUsage } || {};
+  
+  const activeSession = result.activeSession;
+  if (activeSession && activeSession.startTime && activeSession.url) {
+    const sessionTime = (Date.now() - activeSession.startTime) / 1000 / 60;
+    const matchedSite = await getMatchingDistractingSite(activeSession.url);
+    if (matchedSite) {
+      todayUsage += sessionTime;
+      siteUsage[matchedSite] = (siteUsage[matchedSite] || 0) + sessionTime;
+    }
+  }
+  
+  const syncResult = await chrome.storage.sync.get(['dailyLimit']);
+  const dailyLimit = syncResult.dailyLimit || 120;
+  
+  return { todayUsage, siteUsage, dailyLimit };
 }
 
 async function getMatchingDistractingSite(url) {

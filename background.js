@@ -42,6 +42,32 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
   }
 });
 
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'checkLimit') {
+    await checkActiveSessionTime();
+  }
+});
+
+async function checkActiveSessionTime() {
+  const result = await chrome.storage.local.get(['activeSession']);
+  const activeSession = result.activeSession;
+  
+  if (!activeSession || !activeSession.startTime || !activeSession.url) return;
+  
+  const matchedSite = await getMatchingDistractingSite(activeSession.url);
+  if (!matchedSite) return;
+  
+  const sessionTime = (Date.now() - activeSession.startTime) / 1000 / 60; // Convert to minutes
+  
+  if (sessionTime > 0.01) {
+    await addToTodayUsage(sessionTime, matchedSite);
+    
+    // Update startTime to now to avoid double counting
+    activeSession.startTime = Date.now();
+    await chrome.storage.local.set({ activeSession });
+  }
+}
+
 async function startNewSession(tabId) {
   try {
     const tab = await chrome.tabs.get(tabId);
@@ -187,16 +213,32 @@ function showNotification(title, message) {
 
 // Initialize on startup
 chrome.runtime.onStartup.addListener(async () => {
-  // Reset notification flags for new day
+  chrome.alarms.create('checkLimit', { periodInMinutes: 1 });
+  
   const today = new Date().toDateString();
-  const result = await chrome.storage.local.get(['lastUpdateDate']);
+  const result = await chrome.storage.local.get(['lastUpdateDate', 'todayUsage']);
   
   if (result.lastUpdateDate !== today) {
+    // Reset notification flags for new day
     chrome.storage.local.set({ 
       lastNotification: 0,
       lastUpdateDate: today 
     });
+  } else {
+    // Same day, check if limit exceeded
+    const syncResult = await chrome.storage.sync.get(['dailyLimit']);
+    const dailyLimit = syncResult.dailyLimit || 120;
+    const todayUsage = result.todayUsage || 0;
+    
+    if (todayUsage >= dailyLimit) {
+      showNotification('Daily limit exceeded!', 'You have already reached your daily limit for distracting sites today.');
+    }
   }
+});
+
+// Initialize on install
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.alarms.create('checkLimit', { periodInMinutes: 1 });
 });
 
 function getDomain(url) {

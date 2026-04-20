@@ -126,3 +126,35 @@ button:hover {
   font-weight: bold;
 }
 
+.history-list {
+  background: white;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.history-date {
+  width: 80px;
+  color: #555;
+}
+
+.history-item .progress-bar {
+  height: 10px;
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.history-text {
+  width: 40px;
+  text-align: right;
+  color: #666;
+}
+

@@ -114,7 +114,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function getCurrentStats() {
-  const result = await chrome.storage.local.get(['todayUsage', 'siteUsage', 'activeSession']);
+  const result = await chrome.storage.local.get(['todayUsage', 'siteUsage', 'activeSession', 'usageHistory']);
   let todayUsage = result.todayUsage || 0;
   let siteUsage = { ...result.siteUsage } || {};
   
@@ -131,7 +131,7 @@ async function getCurrentStats() {
   const syncResult = await chrome.storage.sync.get(['dailyLimit']);
   const dailyLimit = syncResult.dailyLimit || 120;
   
-  return { todayUsage, siteUsage, dailyLimit };
+  return { todayUsage, siteUsage, dailyLimit, usageHistory: result.usageHistory || [] };
 }
 
 async function getMatchingDistractingSite(url) {
@@ -161,6 +161,24 @@ async function addToTodayUsage(minutes, domain) {
   
   // Reset if it's a new day
   if (result.lastUpdateDate !== today) {
+    // Save history
+    const historyResult = await chrome.storage.local.get(['usageHistory']);
+    let usageHistory = historyResult.usageHistory || [];
+    
+    if (result.lastUpdateDate) {
+      usageHistory.push({
+        date: result.lastUpdateDate,
+        usage: result.todayUsage || 0
+      });
+      
+      // Keep only last 7 days
+      if (usageHistory.length > 7) {
+        usageHistory = usageHistory.slice(-7);
+      }
+      
+      await chrome.storage.local.set({ usageHistory });
+    }
+    
     todayUsage = 0;
     siteUsage = {};
     await chrome.storage.local.set({ lastNotification: 0 });

@@ -18,14 +18,51 @@ async function loadTodayStats() {
       return;
     }
 
-    const { todayUsage, siteUsage, dailyLimit } = response;
+    const { todayUsage, siteUsage, dailyLimit, usageHistory } = response;
 
     updateProgressBar(todayUsage, dailyLimit);
     updateStatsDisplay(todayUsage);
     updateSiteStatsDisplay(siteUsage);
+    updateHistoryDisplay(usageHistory, dailyLimit);
   } catch (error) {
     console.error('Error loading stats:', error);
   }
+}
+
+function updateHistoryDisplay(usageHistory, limit) {
+  const historyStatsDiv = document.getElementById('historyStats');
+
+  if (!usageHistory || usageHistory.length === 0) {
+    historyStatsDiv.innerHTML = '<div>No history data yet.</div>';
+    return;
+  }
+
+  let html = '<div class="history-list">';
+  for (const item of usageHistory) {
+    const percentage = Math.min((item.usage / limit) * 100, 100);
+    const dateObj = new Date(item.date);
+    const dateStr = dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    
+    let colorClass = 'progress-fill';
+    if (percentage > 80) {
+      colorClass += ' danger';
+    } else if (percentage > 60) {
+      colorClass += ' warning';
+    }
+
+    html += `
+      <div class="history-item">
+        <div class="history-date">${dateStr}</div>
+        <div class="progress-bar history-bar">
+          <div class="${colorClass}" style="width: ${percentage}%"></div>
+        </div>
+        <span class="history-text">${Math.round(item.usage)}m</span>
+      </div>
+    `;
+  }
+  html += '</div>';
+
+  historyStatsDiv.innerHTML = html;
 }
 
 function updateSiteStatsDisplay(siteUsage) {
